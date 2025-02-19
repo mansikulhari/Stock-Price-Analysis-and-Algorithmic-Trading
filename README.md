@@ -165,11 +165,6 @@ CREATE TABLE trades (
    - Feature normalization
    - Time series alignment
 
-## Contributing
-This project is part of DSCI-560 coursework at USC.
-
-## License
-This project is licensed under the MIT License - see the LICENSE file for details.
 
 ## Acknowledgments
 - Yahoo Finance API for stock data
