@@ -1,4 +1,4 @@
-# DSCI560_Lab3
+# Stock Price Analysis and Algorithmic Trading
 
 ## Preliminaries
 - Make sure Docker is installed. If it's not, you can download it from the [here](https://www.docker.com/products/docker-desktop). 
