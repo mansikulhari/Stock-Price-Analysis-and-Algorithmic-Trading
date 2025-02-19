@@ -1,135 +1,177 @@
 # Stock Price Analysis and Algorithmic Trading
 
-A comprehensive system for stock data collection, analysis, and algorithmic trading implementation using Python and MySQL.
+A comprehensive system for stock data collection, analysis, and algorithmic trading implementation using Python, MySQL, and various prediction models.
+
+## Project Structure
+```
+├── models/
+│   ├── moving_averages.py    # Implementation of SMA and EMA strategies
+│   ├── prophet_model.py      # Facebook Prophet model implementation
+│   ├── rsi.py               # Relative Strength Index calculations
+│   └── time_series_transformer.py  # Time series data transformations
+├── part_1/
+│   └── sql-scripts/
+│       ├── init.sql         # Database initialization
+│       ├── create_portfolio.py
+│       ├── docker-compose.yaml
+│       ├── manage_portfolio.py
+│       └── preprocess.py
+├── main.py                  # Main application entry point
+├── portfolio.py             # Portfolio management functionality
+├── requirements.txt         # Python dependencies
+├── trader.py               # Trading logic implementation
+└── train.py                # Model training scripts
+```
 
 ## Prerequisites
 
-- Docker (Download [here](https://www.docker.com/products/docker-desktop/))
-- docker-compose
-- Python
-- MySQL (local installation)
-- Project should have permissions to access MySQL root (password is set to "easy")
+### Docker Installation
+1. Download Docker Desktop:
+   - [Docker for Windows](https://docs.docker.com/desktop/windows/install/)
+   - [Docker for Mac](https://docs.docker.com/desktop/mac/install/)
+   - [Docker for Linux](https://docs.docker.com/engine/install/)
 
-### Note for Non-ARM Users
-If you are not using an ARM chip, modify docker-compose.yaml:
-- Line 4: Change to `image: mysql:latest`
-- Line 14: Change to `image: phpmyadmin/phpmyadmin`
+2. Install docker-compose (included in Docker Desktop for Windows/Mac)
+
+3. Verify installation:
+```bash
+docker --version
+docker-compose --version
+```
+
+### Python Requirements
+Install required Python packages:
+```bash
+pip install -r requirements.txt
+```
 
 ## Setup
 
-1. Navigate to project directory and run:
+1. Database Setup
 ```bash
+# Start Docker containers
 docker-compose up -d
+
+# Verify containers are running
+docker ps
 ```
 
-2. Install required packages:
-```bash
-pip3 install -r requirements.txt
+2. Configure MySQL:
+- Default root password is set to "easy"
+- Access phpMyAdmin at: http://localhost:8080/phpmyadmin
+
+### Note for Non-ARM Users
+If you're not using an ARM chip, modify docker-compose.yaml:
+```yaml
+# Change from:
+image: mysql:latest
+# To:
+image: phpmyadmin/phpmyadmin
 ```
-
-3. Access the Database UI at:
-```
-http://localhost:8080/phpmyadmin
-```
-
-## Project Structure
-
-```
-├── part1/
-│   ├── data_collection/
-│   │   ├── stock_fetcher.py
-│   │   └── portfolio_manager.py
-│   ├── database/
-│   │   ├── db_setup.py
-│   │   └── db_operations.py
-│   └── preprocessing/
-│       └── data_cleaner.py
-├── part2/
-│   ├── algorithms/
-│   │   ├── moving_average.py
-│   │   ├── rsi_strategy.py
-│   │   └── lstm_predictor.py
-│   ├── trading/
-│   │   ├── mock_environment.py
-│   │   └── performance_metrics.py
-│   └── visualization/
-│       └── results_plotter.py
-├── docker-compose.yaml
-├── requirements.txt
-└── README.md
-```
-
-## Features
-
-### Part 1: Data Collection & Storage
-- Real-time stock data fetching using yfinance API
-- Portfolio creation and management
-- Stock validation
-- Data preprocessing and cleaning
-- MySQL database integration
-
-### Part 2: Analysis & Trading
-- Implementation of trading algorithms:
-  - Simple Moving Average (SMA)
-  - Exponential Moving Average (EMA)
-  - Relative Strength Index (RSI)
-  - Advanced algorithms (ARIMA, LSTM)
-- Mock trading environment
-- Performance metrics calculation:
-  - Portfolio returns
-  - Sharpe ratio
-  - MAE & RMSE
 
 ## Usage
 
-1. Create a new portfolio:
+### 1. Portfolio Management
 ```bash
-python portfolio_manager.py create --name "my_portfolio"
+# Create a new portfolio
+python manage_portfolio.py create --name "my_portfolio"
+
+# Add stocks to portfolio
+python manage_portfolio.py add --portfolio "my_portfolio" --symbols "AAPL,GOOGL,MSFT"
 ```
 
-2. Add stocks to portfolio:
+### 2. Data Collection
 ```bash
-python portfolio_manager.py add --portfolio "my_portfolio" --symbol "AAPL,GOOGL,MSFT"
+# Fetch historical data
+python main.py fetch --portfolio "my_portfolio" --days 365
 ```
 
-3. Run trading simulation:
+### 3. Model Training
 ```bash
-python mock_environment.py --portfolio "my_portfolio" --initial-fund 100000 --algorithm "sma"
+# Train prediction models
+python train.py --model "prophet" --stock "AAPL"
 ```
 
-## Performance Metrics
+### 4. Trading
+```bash
+# Run trading simulation
+python trader.py --portfolio "my_portfolio" --model "moving_average"
+```
 
-The system calculates several key metrics:
-- Total portfolio value
-- Annualized returns
-- Sharpe ratio
-- Mean Absolute Error (MAE)
-- Root Mean Squared Error (RMSE)
+## Trading Models
+
+### 1. Moving Averages
+- Simple Moving Average (SMA)
+- Exponential Moving Average (EMA)
+- Customizable time periods
+
+### 2. RSI (Relative Strength Index)
+- Momentum indicator
+- Overbought/Oversold signals
+- Customizable period settings
+
+### 3. Prophet Model
+- Facebook's time series prediction model
+- Handles seasonality
+- Future trend forecasting
+
+### 4. Time Series Transformer
+- Data preprocessing
+- Feature engineering
+- Time series specific transformations
 
 ## Database Schema
 
-### Portfolio Table
+The project uses MySQL with the following structure:
+
 ```sql
+-- Portfolio Table
 CREATE TABLE portfolios (
     id INT PRIMARY KEY AUTO_INCREMENT,
-    name VARCHAR(255),
-    creation_date DATETIME,
-    initial_value DECIMAL(15,2)
+    name VARCHAR(255) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Stocks Table
+CREATE TABLE stocks (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    symbol VARCHAR(10) NOT NULL,
+    portfolio_id INT,
+    FOREIGN KEY (portfolio_id) REFERENCES portfolios(id)
+);
+
+-- Trading History Table
+CREATE TABLE trades (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    stock_id INT,
+    type ENUM('BUY', 'SELL'),
+    price DECIMAL(10,2),
+    quantity INT,
+    timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (stock_id) REFERENCES stocks(id)
 );
 ```
 
-### Stocks Table
-```sql
-CREATE TABLE stocks (
-    id INT PRIMARY KEY AUTO_INCREMENT,
-    symbol VARCHAR(10),
-    portfolio_id INT,
-    purchase_date DATETIME,
-    quantity INT,
-    price DECIMAL(15,2),
-    FOREIGN KEY (portfolio_id) REFERENCES portfolios(id)
-);
-```
+## Data Processing
+
+1. Data Collection
+   - Real-time stock data via yfinance
+   - Historical data retrieval
+   - Error handling for API limits
+
+2. Preprocessing
+   - Missing value handling
+   - Outlier detection
+   - Feature normalization
+   - Time series alignment
 
 ## Contributing
 This project is part of DSCI-560 coursework at USC.
+
+## License
+This project is licensed under the MIT License - see the LICENSE file for details.
+
+## Acknowledgments
+- Yahoo Finance API for stock data
+- Facebook Prophet for time series prediction
+- SQLAlchemy for database operations
